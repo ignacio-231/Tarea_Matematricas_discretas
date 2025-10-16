@@ -1,0 +1,2 @@
+a,b,c,d,e,f,g,h,i,j
+ab,ah,bc,bj,bh,cj,cd,ce,dj,di,de,ej,ei,ef,eg,fi,fh,fg,gi,gh,hi,hj,ij
