@@ -6,12 +6,6 @@
 
 #define MAX_LINE_LENGTH 256
 
-// --- Prototipos de funciones ---
-void createMatrix(char*** matrix, int size);
-void freeMatrix(char** matrix, int size);
-void readGraph(const char* fileName, int* nNodes, char*** matrix);
-void crear_matriz_orientada(char*** matriz_ptr, char*** matriz_salida_ptr, int nNodes);
-void findShortestPath(char** matrix, int nNodes, char v1, char v2);
 
 // --- Implementación de funciones ---
 
@@ -98,34 +92,66 @@ void readGraph(const char* fileName, int* nNodes, char*** matrix) {
     free(lineE_copy);
 }
 
-void crear_matriz_orientada(char*** matriz_ptr, char*** matriz_salida_ptr, int nNodes) {
-    
-    char** matriz_entrada = *matriz_ptr;
+void crear_matriz_orientada12(char*** matriz_ptr,char*** matrix_salida1,char*** matrix_salida2,int nNodes) {
+    char** in = *matriz_ptr;
 
-    // Asignar memoria para la nueva matriz de salida
-    createMatrix(matriz_salida_ptr, nNodes);
+    // Inicializa ambas en 0
+    createMatrix(matrix_salida1, nNodes);
+    createMatrix(matrix_salida2, nNodes);
 
-    char** matriz_salida = *matriz_salida_ptr;
-
-    // Iterar sobre la matriz de entrada (solo el triángulo superior)
+    // Recorre solo mitad superior 
     for (int i = 0; i < nNodes; i++) {
         for (int j = i + 1; j < nNodes; j++) {
-            
-            // Si existe una arista no-dirigida en la matriz original...
-            if (matriz_entrada[i][j] == 1) {
-                
-                // ...decidir aleatoriamente la dirección en la nueva matriz.
-                if (rand() % 2) {
-                    // Crear arista dirigida i -> j
-                    matriz_salida[i][j] = 1;
+            // Hay arista si cualquiera de las dos posiciones está en 1
+            if (in[i][j] == 1) {
+                // Orientación determinista:
+                // salida1: i -> j
+                (*matrix_salida1)[i][j] = 1;
+                // salida2 (complementaria): j -> i
+                (*matrix_salida2)[j][i] = 1;
+            }
+        }
+    }
+}
+void crear_matriz_orientada34(char*** matriz_ptr,char*** matrix_salida3,char*** matrix_salida4,int nNodes){
+    char** in = *matriz_ptr;
+
+    createMatrix(matrix_salida3, nNodes);
+    createMatrix(matrix_salida4, nNodes);
+
+    for (int i = 0; i < nNodes; i++) {
+        for (int j = i + 1; j < nNodes; j++) {
+            if (in[i][j]) {
+                if ( ((i + j) & 1) == 0 ) {
+                    // par: i -> j en la 3, j -> i en la 4
+                    (*matrix_salida3)[i][j] = 1;
+                    (*matrix_salida4)[j][i] = 1;
                 } else {
-                    // Crear arista dirigida j -> i
-                    matriz_salida[j][i] = 1;
+                    // impar: j -> i en la 3, i -> j en la 4
+                    (*matrix_salida3)[j][i] = 1;
+                    (*matrix_salida4)[i][j] = 1;
                 }
             }
         }
     }
 }
+void Imprimir_matriz_adyacencia(char** matrix, int nNodes) {
+    // Encabezado de columnas (con espacio inicial para alinear)
+    printf("  ");
+    for (int j = 0; j < nNodes; j++) {
+        printf("%c ", 'a' + j);
+    }
+    printf("\n");
+    // Filas
+    for (int i = 0; i < nNodes; i++) {
+        printf("%c ", 'a' + i);
+        for (int j = 0; j < nNodes; j++) {
+            printf("%d ", (int)matrix[i][j]);
+        }
+        printf("\n"); // una sola nueva línea
+    }
+}
+
 
 void findShortestPath(char** matrix, int nNodes, char v1, char v2) {
     int startNode = v1 - 'a';
@@ -205,52 +231,53 @@ int main(int argc, char const *argv[]) {
 
     int nNodes = 0;
     char** matrix = NULL;
-    char** matrix_orientada = NULL;
+    char** matrix_orientada1 = NULL;
+    char** matrix_orientada2 = NULL;
+    char** matrix_orientada3 = NULL;
+    char** matrix_orientada4 = NULL;
 
     readGraph(fileName, &nNodes, &matrix);
-    crear_matriz_orientada(&matrix, &matrix_orientada, nNodes);
+    crear_matriz_orientada12(&matrix, &matrix_orientada1,&matrix_orientada2, nNodes);
+    crear_matriz_orientada34(&matrix,&matrix_orientada3,&matrix_orientada4, nNodes);
 
 
     // Imprimir matriz de adyacencia original
-    printf("Matriz de adyacencia (Original No-Dirigida):\n  ");
-    for (int i = 0; i < nNodes; i++) {
-        printf("%c ", 'a' + i);
-    }
-    printf("\n");
-    for (int i = 0; i < nNodes; i++) {
-        printf("%c ", 'a' + i);
-        for (int j = 0; j < nNodes; j++) {
-            printf("%d ", matrix[i][j]);
-        }
-        printf("\n\n");
-    }
-
-    // Imprimir matriz de adyacencia nueva (orientada)
-    printf("Matriz de adyacencia (Nueva Dirigida):\n  ");
-    for (int i = 0; i < nNodes; i++) {
-        printf("%c ", 'a' + i);
-    }
-    printf("\n");
-    for (int i = 0; i < nNodes; i++) {
-        printf("%c ", 'a' + i);
-        for (int j = 0; j < nNodes; j++) {
-            printf("%d ", matrix_orientada[i][j]);
-        }
-        printf("\n\n");
-    }
-    
-    // Camino en el grafo original
-    printf("--- Camino en Grafo Original (No-Dirigido) ---\n");
+    printf("Matriz de adyacencia de grafo no orientado:\n");
+    Imprimir_matriz_adyacencia(matrix,nNodes);
+  // Camino en el grafo original
+    printf(" Camino en Grafo no orientado\n");
     findShortestPath(matrix, nNodes, v1, v2);
-    
-    // Camino en el grafo nuevo (orientado)
-    printf("\n--- Camino en Grafo Nuevo (Dirigido) ---\n");
-    findShortestPath(matrix_orientada, nNodes, v1, v2);
+    // Imprimir matriz de adyacencia nueva (orientada)
+    printf("matriz orientada 1:\n");
+    Imprimir_matriz_adyacencia(matrix_orientada1,nNodes);
+// Camino en el grafo orientado 1
+    printf("\n Camino del grafo orientado 1\n");
+    findShortestPath(matrix_orientada1, nNodes, v1, v2);
+//grafo orientado 2
+    printf("Matriz de adyaciencia de grafo orientado 2: \n");
+    Imprimir_matriz_adyacencia(matrix_orientada2,nNodes);
 
+    printf("\n Camino del grafo orientado 2\n");
+    findShortestPath(matrix_orientada2, nNodes, v1, v2);
+//grafo orientado 3
+    printf("Matriz de grafo orientado 3:\n");
+    Imprimir_matriz_adyacencia(matrix_orientada3,nNodes);
+
+    printf("\n Camino del grafo orientado 3\n");
+    findShortestPath(matrix_orientada3, nNodes, v1, v2);
+//grafo orientado 4
+    printf("Matriz del grafo orientado 4: \n");
+    Imprimir_matriz_adyacencia(matrix_orientada4,nNodes);
+
+    printf("\nCamino del grafo orientado 4\n");
+    findShortestPath(matrix_orientada4, nNodes, v1, v2);
     
     // Liberar ambas matrices
-    freeMatrix(matrix, nNodes);
-    freeMatrix(matrix_orientada, nNodes);
+freeMatrix(matrix, nNodes);
+freeMatrix(matrix_orientada1, nNodes);
+freeMatrix(matrix_orientada2, nNodes);
+freeMatrix(matrix_orientada3, nNodes);
+freeMatrix(matrix_orientada4, nNodes);
 
     return 0;
 }
