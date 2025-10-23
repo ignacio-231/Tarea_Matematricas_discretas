@@ -10,6 +10,7 @@
 // --- Implementación de funciones ---
 
 void createMatrix(char*** matrix, int size) {
+    // Se aloja memoria para la matriz
     *matrix = (char**)malloc(size * sizeof(char*));
     if (*matrix == NULL) {
         perror("Error en malloc para filas");
@@ -28,6 +29,7 @@ void createMatrix(char*** matrix, int size) {
 }
 
 void freeMatrix(char** matrix, int size) {
+    // Se libera la memoria de la matriz (se libera tambien cada fila para evitar fugas de memoria)
     if (matrix == NULL) {
         return;
     }
@@ -39,10 +41,12 @@ void freeMatrix(char** matrix, int size) {
 
 
 void readGraph(const char* fileName, int* nNodes, char*** matrix) {
+    // Se lee el grafo del archivo y se guarda en la matriz
     FILE *file;
     char lineV[MAX_LINE_LENGTH];
     char lineE[MAX_LINE_LENGTH];
 
+    // Se valida que el archivo exista y no esté vacio
     file = fopen(fileName, "r");
     if (file == NULL) {
         perror("Error al abrir el archivo");
@@ -56,6 +60,7 @@ void readGraph(const char* fileName, int* nNodes, char*** matrix) {
     }
     fclose(file);
 
+    // Se va leyendo las lineas del archivo y se separan por comas los strings
     lineV[strcspn(lineV, "\n\r")] = 0;
     lineE[strcspn(lineE, "\n\r")] = 0;
 
@@ -73,8 +78,10 @@ void readGraph(const char* fileName, int* nNodes, char*** matrix) {
         exit(1);
     }
 
+    // Se reserva la memoria de la matriz
     createMatrix(matrix, *nNodes);
 
+    // Se guardan los datos dentro de la matriz
     token = strtok(lineE_copy, ",");
     while (token != NULL) {
         if (strlen(token) >= 2) {
@@ -148,7 +155,7 @@ void Imprimir_matriz_adyacencia(char** matrix, int nNodes) {
         for (int j = 0; j < nNodes; j++) {
             printf("%d ", (int)matrix[i][j]);
         }
-        printf("\n"); // una sola nueva línea
+        printf("\n");
     }
 }
 
@@ -165,7 +172,7 @@ void findShortestPath(char** matrix, int nNodes, char v1, char v2) {
         }
     }
 
-    int queue[nNodes]; // Cola para los nodos a visitar (BFS)
+    int queue[nNodes]; // Cola para los nodos a visitar
     int visited[nNodes]; // Para marcar nodos ya visitados y en la cola
     for(int i = 0; i < nNodes; i++) visited[i] = 0;
 
@@ -176,7 +183,7 @@ void findShortestPath(char** matrix, int nNodes, char v1, char v2) {
     queue[tail++] = startNode;
     visited[startNode] = 1;
 
-    // 2. Búsqueda en Anchura (BFS)
+    // 2. Búsqueda
     while (head < tail) {
         int currentNode = queue[head++]; // Sacar el primer nodo de la cola
 
@@ -219,6 +226,10 @@ void findShortestPath(char** matrix, int nNodes, char v1, char v2) {
 int main(int argc, char const *argv[]) {
     if (argc != 4) {
         printf("Error, uso del programa: %s v1 v2 grafo.txt\n", argv[0]);
+        printf("Lista de grafos:\n");
+        printf("-eulerian.txt\n");
+        printf("-plane.txt\n");
+        printf("-tree.txt\n");
         return 1;
     }
     
